@@ -1,15 +1,16 @@
-#!/bin/sh
+#!/bin/bash
 # File: sendtokindle.bash - last edit
 # yoshitake 05-Nov-2015
 
+PROGRAMNAME=`basename $0`
 
 function usage() {
     cat <<EOF
 NAME
-    $0 - Send files to kindle.
+    $PROGRAMNAME - Send files to kindle.
 
 SYNOPSIS
-    $0 [OPTION]... [FILE]...
+    $PROGRAMNAME [OPTION]... [FILE]...
 
 DESCRIPTION
     -m to mail address.
