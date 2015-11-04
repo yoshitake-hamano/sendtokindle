@@ -1,0 +1,110 @@
+#!/bin/sh
+# File: sendtokindle.bash - last edit
+# yoshitake 05-Nov-2015
+
+
+function usage() {
+    cat <<EOF
+NAME
+    $0 - Send files to kindle.
+
+SYNOPSIS
+    $0 [OPTION]... [FILE]...
+
+DESCRIPTION
+    -m to mail address.
+    -h show this help and exit.
+EOF
+}
+
+while getopts m:h OPT; do
+  case $OPT in
+    m) TO_KINDLE_MAIL=$OPTARG
+       ;;
+    h) usage
+       exit 0
+       ;;
+    ?) usage
+       exit 1
+       ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+if [ $# -eq 0 ] ; then
+  usage
+  exit 1
+fi
+
+if [ x$TO_KINDLE_MAIL == x ] ; then
+  usage
+  cat <<EOF
+environment TO_KINDLE_MAIL is not defined.
+EOF
+  exit 1
+fi
+
+function sendmailOnBase64 () {
+  local to_addr=$1
+  local from_addr=$2
+  local subject=$3
+  local filepath=$4
+  local filename=`basename $4`
+  local mime=$(file --mime $filepath | cut -d ' ' -f 2)
+
+ENCODING=base64
+boundary="---my-unlikely-text-for-mime-boundary---$$--"
+
+(cat <<EOF
+From: $from_addr
+To: $to_addr
+Subject: $subject
+Date: $(date +"%a, %b %e %Y %T %z")
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="$boundary"
+Content-Disposition: inline
+
+--$boundary
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+This email has attached the file
+
+--$boundary
+Content-Type: $mime;name="$filename"
+Content-Disposition: attachment;filename="$filename"
+Content-Transfer-Encoding: $ENCODING
+
+EOF
+    base64 $filapath
+    echo ""
+    echo "--$boundary") | sendmail -t
+}
+
+function sendtokindle () {
+  filapath=$1
+  filename=`basename $1`
+
+  # kindle.co.com don't know the uuencode attached file.
+  # so choose base64 attached file.
+  sendmailOnBase64 $TO_KINDLE_MAIL "" $filename $filapath
+}
+
+function errorMessage() {
+  echo 1>&2
+  echo $1 1>&2
+  exit 1
+}
+
+echo Sending to $TO_KINDLE_MAIL
+for i in $@; do
+  echo -n .
+  sendtokindle "$i" || errorMessage "Could not send $1."
+done
+
+echo
+echo finished
+
+# Log
+# 05-Nov-2015 yoshitake Created.
